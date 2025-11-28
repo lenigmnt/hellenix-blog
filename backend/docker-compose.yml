@@ -1,0 +1,16 @@
+services:
+  mongodb:
+    image: mongo
+    container_name: hellenix_mongodb # hellenix
+    restart: unless-stopped
+    ports:
+      - "27018:27017"   # 27018 pour éviter les conflits
+    environment:
+      MONGO_INITDB_DATABASE: hellenix_blog # nom projet
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: adminpassword
+    volumes:
+      - db_data:/data/db
+
+volumes:
+  db_data:
