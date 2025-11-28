@@ -1,33 +1,40 @@
-// ===============================
-// 📌 1) Chargement des variables d'environnement
-// ===============================
-// Doit être exécuté AVANT tous les imports pour rendre process.env disponible.
+// ================================================
+// 1) Chargement des variables d'environnement
+// ================================================
+// Doit être exécuté avant tout autre import afin que
+// process.env soit disponible dans toute l’application.
 require('dotenv').config();
 
-// ===============================
-// 📌 2) Import des dépendances principales
-// ===============================
+// ================================================
+// 2) Import des dépendances principales
+// ================================================
 const express = require('express');
+const securityMiddleware = require('./middleware/security');
 const { connectDB } = require('./config/database');
 
-// ===============================
-// 📌 3) Initialisation de l'application Express
-// ===============================
+// ================================================
+// 3) Initialisation de l'application Express
+// ================================================
 const app = express();
 
-// ===============================
-// 📌 4) Middlewares globaux
-// ===============================
-app.use(express.json());
+// ================================================
+// 4) Middlewares globaux (sécurité + parsers)
+// ================================================
+// Centralisation des middlewares de sécurité (helmet, cors, rate-limit, etc.)
+securityMiddleware(app);
 
-// ===============================
-// 📌 5) Définition du port
-// ===============================
+// NOTE : express.json() est déjà appliqué dans security.js
+// Aucun besoin de le remettre ici pour éviter les doublons.
+
+// ================================================
+// 5) Définition du port
+// ================================================
 const PORT = process.env.PORT || 3001;
 
-// ===============================
-// 📌 6) Route de test (GET /)
-// ===============================
+// ================================================
+// 6) Route de test (GET /)
+// ================================================
+// Permet de vérifier rapidement que l'API tourne et que MongoDB est connecté.
 app.get('/', (req, res) => {
     res.json({
         message: "Bienvenue sur l'API Hellenix !",
@@ -36,9 +43,12 @@ app.get('/', (req, res) => {
     });
 });
 
-// ===============================
-// 📌 7) Fonction principale de démarrage
-// ===============================
+// ================================================
+// 7) Fonction principale de démarrage
+// ================================================
+// La connexion MongoDB est asynchrone : le serveur Express
+// ne démarre que si la base répond correctement.
+// Cela évite un serveur actif sans base fonctionnelle.
 const startServer = async () => {
     try {
         // Connexion à MongoDB
@@ -52,12 +62,12 @@ const startServer = async () => {
         });
 
     } catch (err) {
-        console.error("❌ Erreur de démarrage du serveur :", err.message);
-        process.exit(1);
+        console.error("❌ Erreur lors du démarrage du serveur :", err.message);
+        process.exit(1); // Arrêt forcé si erreur critique
     }
 };
 
-// ===============================
-// 📌 8) Lancement de l'application
-// ===============================
+// ================================================
+// 8) Lancement de l'application
+// ================================================
 startServer();
