@@ -1,29 +1,63 @@
-// Import du module Express
-// Express est un framework web minimaliste pour Node.js
-const express = require('express');
+// ===============================
+// 📌 1) Chargement des variables d'environnement
+// ===============================
+// Doit être exécuté AVANT tous les imports pour rendre process.env disponible.
+require('dotenv').config();
 
-// Création de l'application Express
-// Cette instance sera le coeur de notre serveur web
+// ===============================
+// 📌 2) Import des dépendances principales
+// ===============================
+const express = require('express');
+const { connectDB } = require('./config/database');
+
+// ===============================
+// 📌 3) Initialisation de l'application Express
+// ===============================
 const app = express();
 
-// Configuration du port
-// On utilise la variable d'environnement PORT si elle existe,
-// sinon on utilise le port 3000 par défaut
+// ===============================
+// 📌 4) Middlewares globaux
+// ===============================
+app.use(express.json());
+
+// ===============================
+// 📌 5) Définition du port
+// ===============================
 const PORT = process.env.PORT || 3001;
 
-// Route de base pour tester le serveur
-// GET / renvoie un message simple pour confirmer que le serveur fonctionne
+// ===============================
+// 📌 6) Route de test (GET /)
+// ===============================
 app.get('/', (req, res) => {
     res.json({
-        message: 'Bienvenue sur l\'API du Blog MERN !',
-        version: '1.0.0',
-        status: 'Le serveur fonctionne correctement'
+        message: "Bienvenue sur l'API Hellenix !",
+        version: "1.0.0",
+        status: "Server OK + MongoDB OK"
     });
 });
 
-// Démarrage du serveur
-// Le serveur écoute sur le port spécifié et affiche un message de confirmation
-app.listen(PORT, () => {
-    console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-    console.log(`📍 URL : http://localhost:${PORT}`);
-});
+// ===============================
+// 📌 7) Fonction principale de démarrage
+// ===============================
+const startServer = async () => {
+    try {
+        // Connexion à MongoDB
+        await connectDB();
+
+        // Démarrage du serveur Express
+        app.listen(PORT, () => {
+            console.log(`🚀 Serveur Hellenix démarré sur le port ${PORT}`);
+            console.log(`📍 URL : http://localhost:${PORT}`);
+            console.log(`🌍 Environnement : ${process.env.NODE_ENV || "development"}`);
+        });
+
+    } catch (err) {
+        console.error("❌ Erreur de démarrage du serveur :", err.message);
+        process.exit(1);
+    }
+};
+
+// ===============================
+// 📌 8) Lancement de l'application
+// ===============================
+startServer();
