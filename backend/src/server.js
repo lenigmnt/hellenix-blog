@@ -19,7 +19,7 @@ const UserRoutes = require('./routes/UserRoutes');
 const CategoryRoutes = require('./routes/CategoryRoutes');
 const TagRoutes = require('./routes/TagRoutes');
 const ArticleRoutes = require('./routes/ArticleRoutes');
-const ReviewRoutes = require('./routes/ReviewRoutes');
+const ReviewRoutes = require('./routes/ReviewRoutes');   // <- IMPORTANT
 const RatingRoutes = require('./routes/RatingRoutes');
 const LikeRoutes = require('./routes/LikeRoutes');
 
@@ -64,13 +64,17 @@ app.use('/api/tags', TagRoutes);
 // Articles
 app.use('/api/articles', ArticleRoutes);
 
-// ========== IMPORTANT ==========
-// Ces routes NE doivent PAS contenir :articleId ici.
-// Ce sont des ressources séparées et ArticleRoutes gère le nesting.
 // ================================================
-app.use('/api/reviews', ReviewRoutes);
-app.use('/api/rating', RatingRoutes);
+// ⚠️ NESTED ROUTES POUR LES REVIEWS
+// APRES /articles mais AVANT toute route /articles/:id
+// ================================================
+app.use('/api/articles/:articleId/reviews', ReviewRoutes);
+
+// ================================================
+// Likes & Rating (plus tard (bonus))
+// ================================================
 app.use('/api/likes', LikeRoutes);
+app.use('/api/rating', RatingRoutes);
 
 // ================================================
 // 8) Middleware global de gestion des erreurs
