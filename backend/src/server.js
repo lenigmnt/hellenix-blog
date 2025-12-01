@@ -1,8 +1,6 @@
 // ================================================
 // 1) Chargement des variables d'environnement
 // ================================================
-// Doit être exécuté avant tout autre import afin que
-// process.env soit disponible dans toute l’application.
 require('dotenv').config();
 
 // ================================================
@@ -11,30 +9,38 @@ require('dotenv').config();
 const express = require('express');
 const securityMiddleware = require('./middleware/security');
 const { connectDB } = require('./config/database');
+const errorHandler = require('./middleware/errorHandler');
 
 // ================================================
-// 3) Initialisation de l'application Express
+// 3) Import des ROUTES
+// ================================================
+const AuthRoutes = require('./routes/AuthRoutes');
+const UserRoutes = require('./routes/UserRoutes');
+const CategoryRoutes = require('./routes/CategoryRoutes');
+const TagRoutes = require('./routes/TagRoutes');
+const ArticleRoutes = require('./routes/ArticleRoutes');
+const ReviewRoutes = require('./routes/ReviewRoutes');
+const RatingRoutes = require('./routes/RatingRoutes');
+const LikeRoutes = require('./routes/LikeRoutes');
+
+// ================================================
+// 4) Initialisation de l'application Express
 // ================================================
 const app = express();
 
 // ================================================
-// 4) Middlewares globaux (sécurité + parsers)
+// 5) Middlewares globaux (sécurité + parsers)
 // ================================================
-// Centralisation des middlewares de sécurité (helmet, cors, rate-limit, etc.)
 securityMiddleware(app);
 
-// NOTE : express.json() est déjà appliqué dans security.js
-// Aucun besoin de le remettre ici pour éviter les doublons.
-
 // ================================================
-// 5) Définition du port
+// 6) Définition du port
 // ================================================
 const PORT = process.env.PORT || 3001;
 
 // ================================================
-// 6) Route de test (GET /)
+// 7) ROUTES de l'application
 // ================================================
-// Permet de vérifier rapidement que l'API tourne et que MongoDB est connecté.
 app.get('/', (req, res) => {
     res.json({
         message: "Bienvenue sur l'API Hellenix !",
@@ -43,18 +49,41 @@ app.get('/', (req, res) => {
     });
 });
 
+// Auth
+app.use('/api/auth', AuthRoutes);
+
+// Users (admin)
+app.use('/api/users', UserRoutes);
+
+// Categories
+app.use('/api/categories', CategoryRoutes);
+
+// Tags
+app.use('/api/tags', TagRoutes);
+
+// Articles
+app.use('/api/articles', ArticleRoutes);
+
+// ========== IMPORTANT ==========
+// Ces routes NE doivent PAS contenir :articleId ici.
+// Ce sont des ressources séparées et ArticleRoutes gère le nesting.
 // ================================================
-// 7) Fonction principale de démarrage
+app.use('/api/reviews', ReviewRoutes);
+app.use('/api/rating', RatingRoutes);
+app.use('/api/likes', LikeRoutes);
+
 // ================================================
-// La connexion MongoDB est asynchrone : le serveur Express
-// ne démarre que si la base répond correctement.
-// Cela évite un serveur actif sans base fonctionnelle.
+// 8) Middleware global de gestion des erreurs
+// ================================================
+app.use(errorHandler);
+
+// ================================================
+// 9) Fonction principale de démarrage
+// ================================================
 const startServer = async () => {
     try {
-        // Connexion à MongoDB
         await connectDB();
 
-        // Démarrage du serveur Express
         app.listen(PORT, () => {
             console.log(`🚀 Serveur Hellenix démarré sur le port ${PORT}`);
             console.log(`📍 URL : http://localhost:${PORT}`);
@@ -63,11 +92,11 @@ const startServer = async () => {
 
     } catch (err) {
         console.error("❌ Erreur lors du démarrage du serveur :", err.message);
-        process.exit(1); // Arrêt forcé si erreur critique
+        process.exit(1);
     }
 };
 
 // ================================================
-// 8) Lancement de l'application
+// 10) Lancement de l'application
 // ================================================
 startServer();

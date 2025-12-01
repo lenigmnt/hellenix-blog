@@ -2,7 +2,7 @@
 // Middlewares de sécurité
 // ===============================
 
-const express = require("express"); // <-- Manquait dans ton fichier !
+const express = require("express"); 
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
@@ -15,7 +15,7 @@ module.exports = function securityMiddleware(app) {
     // Sécurité des headers HTTP
     app.use(helmet());
 
-    // CORS avec whitelist (adapter selon ton front)
+    // CORS avec whitelist
     const whitelist = ["http://localhost:5173"];
     const corsOptions = {
         origin: (origin, callback) => {
