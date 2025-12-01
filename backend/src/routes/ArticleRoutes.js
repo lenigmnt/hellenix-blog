@@ -28,8 +28,13 @@ const { protect } = require("../middleware/auth");
 // Liste des articles publiés (avec filtres)
 router.get("/", ArticleController.getAllArticles);
 
+// Lire un article par ID
+// ⚠️ IMPORTANT : Doit rester AVANT router.use(protect)
+// pour que /articles/:id et /articles/:articleId/reviews soient PUBLICS
+router.get("/:id", ArticleController.getArticle);
+
 /* =========================================================
-   🔐 PROTECTED ROUTES
+   🔐 PROTECTED ROUTES // ATTENTION, tout n'est pas privé!
 ========================================================= */
 router.use(protect);
 
@@ -56,12 +61,5 @@ router.delete("/:id", ArticleController.deleteArticle);
 // Publier un article
 router.patch("/:id/publish", ArticleController.publishArticle);
 
-/* =========================================================
-   🔓 PUBLIC ROUTE
-   (placée après les routes privées pour éviter conflit /me)
-========================================================= */
-
-// Lire un article par ID
-router.get("/:id", ArticleController.getArticle);
 
 module.exports = router;

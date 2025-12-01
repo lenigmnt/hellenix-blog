@@ -61,20 +61,23 @@ app.use('/api/categories', CategoryRoutes);
 // Tags
 app.use('/api/tags', TagRoutes);
 
+// ================================================
+// ⚠️ NESTED ROUTES POUR LES REVIEWS
+// AVANT articles sinon c'est bloqué par l'auth 
+// ================================================
+
+// Reviews
+app.use('/api/articles/:articleId/reviews', ReviewRoutes);
+
 // Articles
 app.use('/api/articles', ArticleRoutes);
 
-// ================================================
-// ⚠️ NESTED ROUTES POUR LES REVIEWS
-// APRES /articles mais AVANT toute route /articles/:id
-// ================================================
-app.use('/api/articles/:articleId/reviews', ReviewRoutes);
 
 // ================================================
 // Likes & Rating (plus tard (bonus))
 // ================================================
-app.use('/api/likes', LikeRoutes);
-app.use('/api/rating', RatingRoutes);
+// app.use('/api/likes', LikeRoutes);
+// app.use('/api/rating', RatingRoutes);
 
 // ================================================
 // 8) Middleware global de gestion des erreurs
