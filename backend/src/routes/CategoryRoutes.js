@@ -20,6 +20,7 @@ const { protect, restrictTo } = require("../middleware/auth");
 // PUBLIC : liste des catégories
 // ==============================
 router.get("/", CategoryController.getCategories);
+router.get("/:id", CategoryController.getCategory); // <-- ajout GET one category
 
 // ==============================
 // ADMIN : create / update / delete

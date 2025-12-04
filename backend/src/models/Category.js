@@ -24,12 +24,28 @@ const categorySchema = new mongoose.Schema(
       type: String,
       unique: true,
       lowercase: true
+    },
+    
+    // -----------------------------------------------------
+    // AJOUTÉ : parent
+    // -----------------------------------------------------
+    // - Permet d'avoir une catégorie parente
+    // - null = catégorie racine
+    // - Une catégorie peut avoir 0, 1 ou plusieurs enfants
+    // -----------------------------------------------------
+
+    parent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null // <-- pour la hiérarchie
     }
   },
-  {
+
+    {
     timestamps: true
-  }
+    }
 );
+
 
 /* ---------------------------------------------------------
    HOOK : Génération automatique du slug

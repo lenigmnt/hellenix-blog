@@ -31,7 +31,10 @@ exports.getCategory = catchAsync(async (req, res, next) => {
 
 // CREATE
 exports.createCategory = catchAsync(async (req, res, next) => {
-  const category = await CategoryService.createCategory(req.body.name);
+  const category = await CategoryService.createCategory({
+    name: req.body.name,
+    parent: req.body.parent || null // add parent
+  });
   res.status(201).json({
     status: "success",
     data: { category }
@@ -40,10 +43,10 @@ exports.createCategory = catchAsync(async (req, res, next) => {
 
 // UPDATE
 exports.updateCategory = catchAsync(async (req, res, next) => {
-  const category = await CategoryService.updateCategory(
-    req.params.id,
-    req.body.name
-  );
+  const category = await CategoryService.updateCategory(req.params.id,{
+    name: req.params.name,
+    parent: req.body.parent || null // add parent
+  });
   res.status(200).json({
     status: "success",
     data: { category }
