@@ -20,6 +20,11 @@ console.log(">>> Article model loaded");
 const mongoose = require("mongoose");
 const slugify = require("slugify");
 
+// ---------------------------------------------------------
+// AJOUTÉ pour cascade delete (import Reviews)
+// ---------------------------------------------------------
+const Review = require("../models/Review"); // <-- AJOUTÉ
+
 /**
  * =========================================================
  *  SCHEMA DEFINITION
@@ -188,7 +193,6 @@ articleSchema.methods.incrementViews = function () {
 /**
  * =========================================================
  *  STATIC METHODS
- *  Méthodes disponibles sur LE MODELE complet
  * =========================================================
  */
 
@@ -202,8 +206,48 @@ articleSchema.statics.findPublished = function () {
 
 /**
  * =========================================================
+ *  CASCADE DELETE REVIEWS
+ *  ---------------------------------------------------------
+ *  - Supprime automatiquement les reviews liées à un article
+ *  - Fonctionne pour deleteOne() sur document
+ *  - Fonctionne pour findByIdAndDelete() / findOneAndDelete()
+ * =========================================================
+ */
+
+/* ---------------------------------------------------------
+   DELETE CASCADE - CAS 1:
+   deleteOne() appelé sur un DOCUMENT
+   Exemple : article.deleteOne()
+--------------------------------------------------------- */
+articleSchema.pre(
+  "deleteOne",
+  { document: true, query: false },
+  async function () {
+    // this = document
+    await Review.deleteMany({ article: this._id }); // <-- AJOUTÉ
+  }
+);
+
+/* ---------------------------------------------------------
+   DELETE CASCADE - CAS 2:
+   findByIdAndDelete() ou findOneAndDelete()
+   Exemple : Article.findByIdAndDelete(id)
+--------------------------------------------------------- */
+articleSchema.pre(
+  "findOneAndDelete",
+  { document: false, query: true },
+  async function (next) {
+    const doc = await this.model.findOne(this.getQuery()); // <-- AJOUTÉ
+    if (doc) {
+      await Review.deleteMany({ article: doc._id }); // <-- AJOUTÉ
+    }
+    next(); // <-- AJOUTÉ
+  }
+);
+
+/**
+ * =========================================================
  *  VIRTUAL FIELDS
- *  Propriétés dynamiques NON stockées en base
  * =========================================================
  */
 
