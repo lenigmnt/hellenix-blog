@@ -25,9 +25,9 @@ const categorySchema = new mongoose.Schema(
       unique: true,
       lowercase: true
     },
-    
+
     // -----------------------------------------------------
-    // AJOUTÉ : parent
+    // AJOUTÉ : parent -> hiérachie infinie
     // -----------------------------------------------------
     // - Permet d'avoir une catégorie parente
     // - null = catégorie racine
@@ -38,14 +38,20 @@ const categorySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       default: null // <-- pour la hiérarchie
+    },
+    // ----------------------------------------
+    // AJOUTÉ : Path complet de la hiérarchie
+    // Exemple : "Histoire ancienne > Grèce > Grèce archaïque"
+    // ----------------------------------------
+    path: {
+      type: String,
+      default: "" // <- add pour le virtual tree
     }
   },
-
     {
     timestamps: true
     }
 );
-
 
 /* ---------------------------------------------------------
    HOOK : Génération automatique du slug
@@ -55,10 +61,38 @@ const categorySchema = new mongoose.Schema(
    - Même logique que pour Article.js (async sans next)
 --------------------------------------------------------- */
 categorySchema.pre("save", async function () {
-  // Ne régénère pas le slug si le nom n'a pas changé
-  if (!this.isModified("name")) return;
+  
+  // Slug si le name change (CORRIGÉ)
+  if (this.isModified("name")) {
+    this.slug = slugify(this.name, { lower: true, strict: true });
+  }
 
-  this.slug = slugify(this.name, { lower: true, strict: true });
+  // PATH hiérarchique (CORRIGÉ)
+  if (!this.parent) {
+    // Catégorie racine
+    this.path = this.name;
+  } else {
+    // Sous-catégorie
+    const parentCategory = await this.constructor.findById(this.parent);
+    if (parentCategory) {
+      this.path = `${parentCategory.path} > ${this.name}`;
+    }
+  }
 });
+
+/* ---------------------------------------------------------
+   VIRTUAL : level (profondeur dans la hiérarchie)
+   ---------------------------------------------------------
+   - Calculée depuis "path"
+   - level = 0 → racine
+   - level = 1 → enfant
+   - level = 2 → petit-enfant
+   - etc.
+--------------------------------------------------------- */
+categorySchema.virtual("level").get(function () {
+  if (!this.path) return 0;
+  return this.path.split(" > ").length - 1; // add
+});
+
 
 module.exports = mongoose.model("Category", categorySchema);
