@@ -23,7 +23,7 @@ const reviewSchema = new mongoose.Schema(
     content: {
       type: String,
       required: [true, "Le contenu est obligatoire"],
-      minlength: [3, "Le commentaire doit contenir au moins 3 caractères"]
+      minlength: [5, "Le commentaire doit contenir au moins 5 caractères"] // corrigé
     },
 
     /**
