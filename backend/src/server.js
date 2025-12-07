@@ -19,9 +19,10 @@ const UserRoutes = require('./routes/UserRoutes');
 const CategoryRoutes = require('./routes/CategoryRoutes');
 const TagRoutes = require('./routes/TagRoutes');
 const ArticleRoutes = require('./routes/ArticleRoutes');
-const ReviewRoutes = require('./routes/ReviewRoutes');   // <- IMPORTANT
-const RatingRoutes = require('./routes/RatingRoutes');
-const LikeRoutes = require('./routes/LikeRoutes');
+const ReviewRoutes = require('./routes/ReviewRoutes');
+// const RatingRoutes = require('./routes/RatingRoutes');  // bonus
+// const LikeRoutes = require('./routes/LikeRoutes');       // bonus
+const AdminRoutes = require('./routes/AdminRoutes');
 
 // ================================================
 // 4) Initialisation de l'application Express
@@ -49,10 +50,10 @@ app.get('/', (req, res) => {
     });
 });
 
-// Auth
+// Auth routes
 app.use('/api/auth', AuthRoutes);
 
-// Users (admin)
+// Users routes (profile + admin management)
 app.use('/api/users', UserRoutes);
 
 // Categories
@@ -63,21 +64,17 @@ app.use('/api/tags', TagRoutes);
 
 // ================================================
 // ⚠️ NESTED ROUTES POUR LES REVIEWS
-// AVANT articles sinon c'est bloqué par l'auth 
+// Doivent être placées avant les articles
 // ================================================
-
-// Reviews
 app.use('/api/articles/:articleId/reviews', ReviewRoutes);
 
 // Articles
 app.use('/api/articles', ArticleRoutes);
 
-
 // ================================================
-// Likes & Rating (plus tard (bonus))
+// ⭐ ADMIN ROUTES
 // ================================================
-// app.use('/api/likes', LikeRoutes);
-// app.use('/api/rating', RatingRoutes);
+app.use('/api/admin', AdminRoutes);
 
 // ================================================
 // 8) Middleware global de gestion des erreurs
@@ -85,7 +82,7 @@ app.use('/api/articles', ArticleRoutes);
 app.use(errorHandler);
 
 // ================================================
-// 9) Fonction principale de démarrage
+// 9) Démarrage serveur
 // ================================================
 const startServer = async () => {
     try {
