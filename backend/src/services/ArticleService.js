@@ -1,31 +1,37 @@
 /**
  * ============================================================
- *  SERVICE : ArticleService
- *  ------------------------------------------------------------
- *  Rôle :
- *    - Contient toute la logique métier liée aux articles
- *    - Le controller appelle ce service
- *    - Le service interagit uniquement avec le modèle Article
- *    - Peut lever des AppError (gestion propre des erreurs)
- *
- *  📌 Architecture respectée :
- *      Route → Controller → Service → Model
+ *  SERVICE : ArticleService (VERSION CORRIGÉE)
  * ============================================================
  */
 
 const Article = require("../models/Article");
+const Category = require("../models/Category");
+const Tag = require("../models/Tag");
 const AppError = require("../utils/AppError");
 
 class ArticleService {
 
   /* ============================================================
-     CREATE ARTICLE
-     ------------------------------------------------------------
-     - Crée un nouvel article
-     - L’auteur vient du JWT (req.user)
-     - Le slug sera généré automatiquement (hook pre-save)
+     CREATE
   ============================================================ */
   static async createArticle({ title, content, category, tags, coverImage, authorId }) {
+
+    // Vérification catégorie
+    const categoryExists = await Category.findById(category);
+    if (!categoryExists) throw new AppError("Catégorie invalide", 400);
+
+    // Vérification tags
+    if (tags) {
+      if (!Array.isArray(tags)) {
+        throw new AppError("Tags doit être un tableau d'IDs", 400);
+      }
+
+      const tagsCount = await Tag.countDocuments({ _id: { $in: tags } });
+      if (tagsCount !== tags.length) {
+        throw new AppError("Certains tags sont invalides", 400);
+      }
+    }
+
     return await Article.create({
       title,
       content,
@@ -37,17 +43,9 @@ class ArticleService {
   }
 
   /* ============================================================
-     GET ALL ARTICLES (PUBLIC)
-     ------------------------------------------------------------
-     Retourne uniquement les articles publiés.
-     Supporte :
-       - ?category=ID
-       - ?tag=ID
-       - ?search=mot
-       - pagination
+     GET LIST (PUBLIC)
   ============================================================ */
   static async getAllArticles({ category, tag, search, page, limit }) {
-
     const query = { status: "published" };
 
     if (category) query.category = category;
@@ -62,43 +60,43 @@ class ArticleService {
 
     return await Article.find(query)
       .populate("author", "username avatar")
-      .populate("category")
-      .populate("tags")
+      .populate("category", "name")
+      .populate("tags", "name")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
   }
 
   /* ============================================================
-     GET SINGLE ARTICLE
-     ------------------------------------------------------------
-     - Récupère un article (draft ou published)
-     - Toujours avec populate
+     GET SINGLE ARTICLE (PROTÉGÉ DRAFT)
   ============================================================ */
-  static async getArticle(id) {
-    return await Article.findById(id)
+  static async getArticle(id, user = null) {
+    const article = await Article.findById(id)
       .populate("author", "username avatar")
       .populate("category")
       .populate("tags");
+
+    if (!article) throw new AppError("Article introuvable", 404);
+
+    // Protection DRAFT : seul auteur/admin peut lire
+    if (article.status === "draft") {
+      if (!user) throw new AppError("Article introuvable", 404);
+      const isAuthor = article.author._id.toString() === user._id.toString();
+      const isAdmin = user.role === "admin";
+      if (!isAuthor && !isAdmin) throw new AppError("Article introuvable", 404);
+    }
+
+    return article;
   }
 
   /* ============================================================
      GET MY ARTICLES (AUTHOR ONLY)
-     ------------------------------------------------------------
-     - Retourne les articles DE L’UTILISATEUR connecté
-     - Supporte :
-          ?status=published
-          ?status=draft
-          ?status=all (défaut)
-     - Toujours triés du plus récent au plus ancien
   ============================================================ */
   static async getMyArticles(userId, status) {
-
     const query = { author: userId };
 
     if (status === "draft") query.status = "draft";
     if (status === "published") query.status = "published";
-    // "all" = aucun filtre sur status
 
     return await Article.find(query)
       .sort({ createdAt: -1 })
@@ -118,9 +116,31 @@ class ArticleService {
       throw new AppError("Vous n’avez pas la permission", 403);
     }
 
-    const allowed = ["title", "content", "category", "tags", "coverImage", "status"];
+    // Empêcher changement de status ici !
+    if ("status" in data) delete data.status;
+
+    // Vérification catégorie si modifiée
+    if (data.category) {
+      const exists = await Category.findById(data.category);
+      if (!exists) throw new AppError("Catégorie invalide", 400);
+    }
+
+    // Vérification tags si modifiés
+    if (data.tags) {
+      if (!Array.isArray(data.tags)) {
+        throw new AppError("Tags doit être un tableau d'IDs", 400);
+      }
+      const tagsCount = await Tag.countDocuments({ _id: { $in: data.tags } });
+      if (tagsCount !== data.tags.length) {
+        throw new AppError("Certains tags sont invalides", 400);
+      }
+    }
+
+    const allowed = ["title", "content", "category", "tags", "coverImage"];
     allowed.forEach(field => {
-      if (data[field] !== undefined) article[field] = data[field];
+      if (data[field] !== undefined) {
+        article[field] = data[field];
+      }
     });
 
     await article.save();
@@ -131,7 +151,6 @@ class ArticleService {
      DELETE ARTICLE (AUTHOR OR ADMIN)
   ============================================================ */
   static async deleteArticle(id, user) {
-
     const article = await Article.findById(id);
     if (!article) throw new AppError("Article introuvable", 404);
 
@@ -147,8 +166,6 @@ class ArticleService {
 
   /* ============================================================
      PUBLISH ARTICLE
-     ------------------------------------------------------------
-     - Auteur uniquement
   ============================================================ */
   static async publishArticle(id, userId) {
     const article = await Article.findById(id);
@@ -156,6 +173,10 @@ class ArticleService {
 
     if (article.author.toString() !== userId.toString()) {
       throw new AppError("Vous n’avez pas la permission", 403);
+    }
+
+    if (article.status === "published") {
+      throw new AppError("Cet article est déjà publié", 400);
     }
 
     article.status = "published";

@@ -1,10 +1,11 @@
 /**
  * ---------------------------------------------------------
  *  MODEL : Category
- *  ---------------------------------------------------------
- *  - Génère automatiquement un slug à partir du nom
- *  - Garantit unicité + formattage propre
- *  - Utilise une logique cohérente avec User.js / Article.js
+ * ---------------------------------------------------------
+ *  - Slug auto basé sur name
+ *  - Hiérarchie infinie via parent
+ *  - Path généré proprement : "Histoire > Grèce > Archaïque"
+ *  - Virtual level : profondeur dans l'arborescence
  * ---------------------------------------------------------
  */
 
@@ -26,73 +27,72 @@ const categorySchema = new mongoose.Schema(
       lowercase: true
     },
 
-    // -----------------------------------------------------
-    // AJOUTÉ : parent -> hiérachie infinie
-    // -----------------------------------------------------
-    // - Permet d'avoir une catégorie parente
-    // - null = catégorie racine
-    // - Une catégorie peut avoir 0, 1 ou plusieurs enfants
-    // -----------------------------------------------------
-
+    // ---------------------------------------------------------
+    // HIÉRARCHIE (parent)
+    // ---------------------------------------------------------
     parent: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
-      default: null // <-- pour la hiérarchie
+      default: null
     },
-    // ----------------------------------------
-    // AJOUTÉ : Path complet de la hiérarchie
-    // Exemple : "Histoire ancienne > Grèce > Grèce archaïque"
-    // ----------------------------------------
+
+    // ---------------------------------------------------------
+    // PATH COMPLET (ex : "Histoire > Grèce > Archaïque")
+    // ---------------------------------------------------------
     path: {
       type: String,
-      default: "" // <- add pour le virtual tree
+      default: ""
     }
   },
-    {
-    timestamps: true
-    }
+  {
+    timestamps: true,
+
+    // FIX : indispensable pour exposer level + path dans API
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+  }
 );
 
 /* ---------------------------------------------------------
-   HOOK : Génération automatique du slug
+   HOOK : slug + path
    ---------------------------------------------------------
-   - Exécuté avant sauvegarde (pre-save)
-   - Se déclenche uniquement si "name" change
-   - Même logique que pour Article.js (async sans next)
+   - Le slug est recalculé si name change
+   - Le path est reconstruit en fonction du parent
 --------------------------------------------------------- */
 categorySchema.pre("save", async function () {
-  
-  // Slug si le name change (CORRIGÉ)
+
+  // ---------------------------------------------------------
+  // SLUG (toujours recalculé si name modifié)
+  // ---------------------------------------------------------
   if (this.isModified("name")) {
-    this.slug = slugify(this.name, { lower: true, strict: true });
+    this.slug = slugify(this.name, { lower: true, strict: true }); // FIX
   }
 
-  // PATH hiérarchique (CORRIGÉ)
+  // ---------------------------------------------------------
+  // PATH HIÉRARCHIQUE
+  // ---------------------------------------------------------
   if (!this.parent) {
     // Catégorie racine
     this.path = this.name;
   } else {
     // Sous-catégorie
     const parentCategory = await this.constructor.findById(this.parent);
+
     if (parentCategory) {
-      this.path = `${parentCategory.path} > ${this.name}`;
+      this.path = `${parentCategory.path} > ${this.name}`; // FIX
     }
   }
 });
 
 /* ---------------------------------------------------------
-   VIRTUAL : level (profondeur dans la hiérarchie)
-   ---------------------------------------------------------
-   - Calculée depuis "path"
-   - level = 0 → racine
-   - level = 1 → enfant
-   - level = 2 → petit-enfant
-   - etc.
+   VIRTUAL : level
+   - 0 → racine
+   - 1 → sous-catégorie
+   - 2 → sous-sous-catégorie
 --------------------------------------------------------- */
 categorySchema.virtual("level").get(function () {
   if (!this.path) return 0;
-  return this.path.split(" > ").length - 1; // add
+  return this.path.split(" > ").length - 1;
 });
-
 
 module.exports = mongoose.model("Category", categorySchema);
