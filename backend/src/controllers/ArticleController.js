@@ -1,13 +1,6 @@
 /**
  * =========================================================
- *  CONTROLLER : ArticleController
- * ---------------------------------------------------------
- *  - Reçoit req/res depuis Express
- *  - Appelle ArticleService pour la logique métier
- *  - Formate les réponses JSON
- *  - Utilise catchAsync pour éviter les try/catch répétitifs
- *
- *  📌 Aucune logique métier ici (service uniquement)
+ *  CONTROLLER : ArticleController (corrigé)
  * =========================================================
  */
 
@@ -15,11 +8,7 @@ const ArticleService = require("../services/ArticleService");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 
-/* =========================================================
-   CREATE ARTICLE (POST /api/articles)
-========================================================= */
 exports.createArticle = catchAsync(async (req, res, next) => {
-
   const article = await ArticleService.createArticle({
     title: req.body.title,
     content: req.body.content,
@@ -35,11 +24,7 @@ exports.createArticle = catchAsync(async (req, res, next) => {
   });
 });
 
-/* =========================================================
-   GET ALL ARTICLES (GET /api/articles)
-========================================================= */
 exports.getAllArticles = catchAsync(async (req, res, next) => {
-
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 10;
 
@@ -58,14 +43,11 @@ exports.getAllArticles = catchAsync(async (req, res, next) => {
   });
 });
 
-/* =========================================================
-   GET SINGLE ARTICLE (GET /api/articles/:id)
-========================================================= */
 exports.getArticle = catchAsync(async (req, res, next) => {
-
-  const article = await ArticleService.getArticle(req.params.id);
-
-  if (!article) return next(new AppError("Article introuvable", 404));
+  const article = await ArticleService.getArticle(
+    req.params.id,
+    req.user || null
+  );
 
   res.status(200).json({
     status: "success",
@@ -73,12 +55,8 @@ exports.getArticle = catchAsync(async (req, res, next) => {
   });
 });
 
-/* =========================================================
-   GET MY ARTICLES (GET /api/articles/me)
-========================================================= */
 exports.getMyArticles = catchAsync(async (req, res, next) => {
-
-  const status = req.query.status || "all"; // published, draft, all
+  const status = req.query.status || "all";
 
   const articles = await ArticleService.getMyArticles(req.user._id, status);
 
@@ -90,11 +68,7 @@ exports.getMyArticles = catchAsync(async (req, res, next) => {
   });
 });
 
-/* =========================================================
-   UPDATE ARTICLE (PATCH /api/articles/:id)
-========================================================= */
 exports.updateArticle = catchAsync(async (req, res, next) => {
-
   const article = await ArticleService.updateArticle(
     req.params.id,
     req.user._id,
@@ -107,11 +81,7 @@ exports.updateArticle = catchAsync(async (req, res, next) => {
   });
 });
 
-/* =========================================================
-   DELETE ARTICLE (DELETE /api/articles/:id)
-========================================================= */
 exports.deleteArticle = catchAsync(async (req, res, next) => {
-
   await ArticleService.deleteArticle(req.params.id, req.user);
 
   res.status(204).json({
@@ -120,11 +90,7 @@ exports.deleteArticle = catchAsync(async (req, res, next) => {
   });
 });
 
-/* =========================================================
-   PUBLISH ARTICLE (PATCH /api/articles/:id/publish)
-========================================================= */
 exports.publishArticle = catchAsync(async (req, res, next) => {
-
   const article = await ArticleService.publishArticle(
     req.params.id,
     req.user._id

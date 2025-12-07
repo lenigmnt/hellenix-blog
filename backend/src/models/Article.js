@@ -1,17 +1,6 @@
 /**
  * =========================================================
  *  MODEL : Article
- *  Description : Structure complète des articles du blog.
- * 
- *  ➤ Champs principaux : titre, contenu, slug, image, statut
- *  ➤ Relations : auteur, catégorie, tags
- *  ➤ Métadonnées : vues, likes, ratings
- *  ➤ Fonctionnalités :
- *      - Génération automatique du slug
- *      - Méthodes d’instance (publish, incrementViews)
- *      - Méthode statique (findPublished)
- *      - Champ virtuel (readingTime)
- *  Les hooks utilisent un "pre-save" async
  * =========================================================
  */
 
@@ -19,25 +8,10 @@ console.log(">>> Article model loaded");
 
 const mongoose = require("mongoose");
 const slugify = require("slugify");
+const Review = require("../models/Review"); 
 
-// ---------------------------------------------------------
-// AJOUTÉ pour cascade delete (import Reviews)
-// ---------------------------------------------------------
-const Review = require("../models/Review"); // <-- AJOUTÉ
-
-/**
- * =========================================================
- *  SCHEMA DEFINITION
- * =========================================================
- */
 const articleSchema = new mongoose.Schema(
   {
-    /* -------------------------------------------------------
-       TITLE
-       Titre lisible de l'article.
-       - Trim supprime les espaces inutiles
-       - Longueurs contrôlées
-    ------------------------------------------------------- */
     title: {
       type: String,
       required: [true, "Le titre est obligatoire"],
@@ -46,77 +20,41 @@ const articleSchema = new mongoose.Schema(
       maxlength: [150, "Maximum 150 caractères"],
     },
 
-    /* -------------------------------------------------------
-       SLUG
-       Version URL-friendly du titre.
-       - Généré automatiquement dans le hook pre-save
-       - Toujours en minuscule
-       - Unique pour éviter les conflits de route
-    ------------------------------------------------------- */
     slug: {
       type: String,
       unique: true,
       lowercase: true,
     },
 
-    /* -------------------------------------------------------
-       CONTENT
-       Contenu principal de l’article.
-       - Longueur minimale pour garantir une vraie publication
-    ------------------------------------------------------- */
     content: {
       type: String,
       required: [true, "Le contenu est obligatoire"],
       minlength: [20, "Minimum 20 caractères"],
     },
 
-    /* -------------------------------------------------------
-       COVER IMAGE
-       Image principale (URL ou fichier).
-       - Optionnelle
-    ------------------------------------------------------- */
     coverImage: {
       type: String,
       default: null,
     },
 
-    /* -------------------------------------------------------
-       STATUS
-       Statut de publication.
-       - "draft" → non publié
-       - "published" → visible publiquement
-    ------------------------------------------------------- */
     status: {
       type: String,
       enum: ["draft", "published"],
       default: "draft",
     },
 
-    /* -------------------------------------------------------
-       VIEWS
-       Nombre total de vues.
-       - Modifiable via incrementViews()
-    ------------------------------------------------------- */
     views: {
       type: Number,
       default: 0,
       min: 0,
     },
 
-    /* -------------------------------------------------------
-       CATEGORY
-       Référence obligatoire à une catégorie.
-    ------------------------------------------------------- */
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: [true, "La catégorie est obligatoire"],
     },
 
-    /* -------------------------------------------------------
-       TAGS
-       Liste de tags liés à l'article.
-    ------------------------------------------------------- */
     tags: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -124,30 +62,17 @@ const articleSchema = new mongoose.Schema(
       }
     ],
 
-    /* -------------------------------------------------------
-       AUTHOR
-       Auteur de l'article (User)
-    ------------------------------------------------------- */
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    /* -------------------------------------------------------
-       METADATA
-       Informations statistiques calculées via d’autres features. (like, rating)
-    ------------------------------------------------------- */
     ratingAvg: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
     likeCount: { type: Number, default: 0 },
   },
 
-  /* ---------------------------------------------------------
-     OPTIONS DU SCHEMA
-     - timestamps : ajoute createdAt / updatedAt
-     - virtuals : autorise les champs virtuels dans JSON/objet
-  --------------------------------------------------------- */
   {
     timestamps: true,
     toJSON: { virtuals: true },
@@ -155,106 +80,60 @@ const articleSchema = new mongoose.Schema(
   }
 );
 
-/**
- * =========================================================
- *  HOOK : pre-save
- *  Génère automatiquement un slug à partir du titre.
- *  - async utilisé 
- *  - Ne régénère pas le slug si le titre n'a pas été modifié
- * =========================================================
- */
+/* ---------------------------------------------------------
+   SLUG : pre-save + pre-findOneAndUpdate FIX COMPLET
+--------------------------------------------------------- */
 articleSchema.pre("save", async function () {
-  if (!this.isModified("title")) return;
-  this.slug = slugify(this.title, { lower: true, strict: true });
+  if (this.isModified("title")) {
+    this.slug = slugify(this.title, { lower: true, strict: true });
+  }
 });
 
-/**
- * =========================================================
- *  INSTANCE METHODS
- * =========================================================
- */
+// Important : slug on update + sécuriser update()
+articleSchema.pre("findOneAndUpdate", async function () {
+  const update = this.getUpdate();
+
+  if (update.title) {
+    update.slug = slugify(update.title, { lower: true, strict: true });
+    this.setUpdate(update);
+  }
+});
 
 /* ---------------------------------------------------------
-   publish() = Passe l’article en "published" puis sauvegarde
+   INSTANCE METHODS
 --------------------------------------------------------- */
 articleSchema.methods.publish = function () {
   this.status = "published";
   return this.save();
 };
 
-/* ---------------------------------------------------------
-   incrementViews() = Incrémente le compteur de vues.
---------------------------------------------------------- */
 articleSchema.methods.incrementViews = function () {
   this.views += 1;
   return this.save();
 };
 
-/**
- * =========================================================
- *  STATIC METHODS
- * =========================================================
- */
-
 /* ---------------------------------------------------------
-   findPublished()
-   Retourne tous les articles publiés, triés par date récente.
+   STATIC METHODS
 --------------------------------------------------------- */
 articleSchema.statics.findPublished = function () {
   return this.find({ status: "published" }).sort({ createdAt: -1 });
 };
 
-/**
- * =========================================================
- *  CASCADE DELETE REVIEWS
- *  ---------------------------------------------------------
- *  - Supprime automatiquement les reviews liées à un article
- *  - Fonctionne pour deleteOne() sur document
- *  - Fonctionne pour findByIdAndDelete() / findOneAndDelete()
- * =========================================================
- */
-
 /* ---------------------------------------------------------
-   DELETE CASCADE - CAS 1:
-   deleteOne() appelé sur un DOCUMENT
-   Exemple : article.deleteOne()
+   DELETE CASCADE REVIEWS
 --------------------------------------------------------- */
-articleSchema.pre(
-  "deleteOne",
-  { document: true, query: false },
-  async function () {
-    // this = document
-    await Review.deleteMany({ article: this._id }); // <-- AJOUTÉ
-  }
-);
+articleSchema.pre("deleteOne", { document: true }, async function () {
+  await Review.deleteMany({ article: this._id });
+});
+
+articleSchema.pre("findOneAndDelete", async function (next) {
+  const doc = await this.model.findOne(this.getQuery());
+  if (doc) await Review.deleteMany({ article: doc._id });
+  next();
+});
 
 /* ---------------------------------------------------------
-   DELETE CASCADE - CAS 2:
-   findByIdAndDelete() ou findOneAndDelete()
-   Exemple : Article.findByIdAndDelete(id)
---------------------------------------------------------- */
-articleSchema.pre(
-  "findOneAndDelete",
-  { document: false, query: true },
-  async function (next) {
-    const doc = await this.model.findOne(this.getQuery()); // <-- AJOUTÉ
-    if (doc) {
-      await Review.deleteMany({ article: doc._id }); // <-- AJOUTÉ
-    }
-    next(); // <-- AJOUTÉ
-  }
-);
-
-/**
- * =========================================================
- *  VIRTUAL FIELDS
- * =========================================================
- */
-
-/* ---------------------------------------------------------
-   readingTime
-   Estimation du temps de lecture :
-   - Hypothèse : 200 mots par minute
+   VIRTUAL : readingTime
 --------------------------------------------------------- */
 articleSchema.virtual("readingTime").get(function () {
   if (!this.content) return 1;
@@ -262,9 +141,4 @@ articleSchema.virtual("readingTime").get(function () {
   return Math.ceil(words / 200);
 });
 
-/**
- * =========================================================
- *  EXPORT DU MODELE
- * =========================================================
- */
 module.exports = mongoose.model("Article", articleSchema);
