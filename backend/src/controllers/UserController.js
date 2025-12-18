@@ -17,7 +17,7 @@ const catchAsync = require("../utils/catchAsync");
 
 // Voir son propre profil
 exports.getMe = catchAsync(async (req, res) => {
-  const user = await UserService.getMe(req.user._id);
+  const user = await UserService.getMe(req.user.id);
 
   res.status(200).json({
     status: "success",
@@ -27,7 +27,7 @@ exports.getMe = catchAsync(async (req, res) => {
 
 // Modifier son profil
 exports.updateMe = catchAsync(async (req, res) => {
-  const user = await UserService.updateMe(req.user._id, req.body);
+  const user = await UserService.updateMe(req.user.id, req.body);
 
   res.status(200).json({
     status: "success",
@@ -38,7 +38,7 @@ exports.updateMe = catchAsync(async (req, res) => {
 // Modifier son mot de passe
 exports.updatePassword = catchAsync(async (req, res) => {
   const token = await UserService.updatePassword(
-    req.user._id,
+    req.user.id,
     req.body.currentPassword,
     req.body.newPassword
   );

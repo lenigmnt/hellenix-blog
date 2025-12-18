@@ -8,7 +8,7 @@ exports.createReview = catchAsync(async (req, res, next) => {
   const review = await ReviewService.createReview({
     content: req.body.content,
     articleId: req.params.articleId,
-    authorId: req.user._id
+    authorId: req.user.id
   });
 
   res.status(201).json({
@@ -39,7 +39,7 @@ exports.getReviewsByArticle = catchAsync(async (req, res, next) => {
 exports.updateReview = catchAsync(async (req, res, next) => {
   const review = await ReviewService.updateReview(
     req.params.id,
-    req.user._id,
+    req.user.id,
     req.body
   );
 

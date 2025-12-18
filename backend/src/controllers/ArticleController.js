@@ -15,7 +15,7 @@ exports.createArticle = catchAsync(async (req, res, next) => {
     category: req.body.category,
     tags: req.body.tags,
     coverImage: req.body.coverImage,
-    authorId: req.user._id
+    authorId: req.user.id
   });
 
   res.status(201).json({
@@ -58,7 +58,7 @@ exports.getArticle = catchAsync(async (req, res, next) => {
 exports.getMyArticles = catchAsync(async (req, res, next) => {
   const status = req.query.status || "all";
 
-  const articles = await ArticleService.getMyArticles(req.user._id, status);
+  const articles = await ArticleService.getMyArticles(req.user.id, status);
 
   res.status(200).json({
     status: "success",
@@ -71,7 +71,7 @@ exports.getMyArticles = catchAsync(async (req, res, next) => {
 exports.updateArticle = catchAsync(async (req, res, next) => {
   const article = await ArticleService.updateArticle(
     req.params.id,
-    req.user._id,
+    req.user.id,
     req.body
   );
 
@@ -93,7 +93,7 @@ exports.deleteArticle = catchAsync(async (req, res, next) => {
 exports.publishArticle = catchAsync(async (req, res, next) => {
   const article = await ArticleService.publishArticle(
     req.params.id,
-    req.user._id
+    req.user.id
   );
 
   res.status(200).json({

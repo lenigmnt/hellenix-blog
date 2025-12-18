@@ -61,7 +61,7 @@ router.get("/:id", ArticleController.getArticle);
  *      • Publier un article
 ========================================================= */
 
-// ➤ Créer un article (author = req.user._id)
+// ➤ Créer un article (author = req.user.id)
 router.post("/", protect, ArticleController.createArticle);
 
 // ➤ Modifier un article (auteur uniquement)

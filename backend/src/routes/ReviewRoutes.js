@@ -30,7 +30,7 @@ router.get("/", ReviewController.getReviewsByArticle);
    PROTECTED : Créer un commentaire
    ---------------------------------------------------------
    - Utilisateur connecté seulement
-   - authorId = req.user._id
+   - authorId = req.user.id
    - articleId = req.params.articleId (depuis route parent)
 --------------------------------------------------------- */
 router.post("/", protect, ReviewController.createReview);
