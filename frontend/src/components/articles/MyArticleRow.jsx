@@ -15,7 +15,7 @@ export default function MyArticleRow({ article, onRefresh }) {
   const isPublished = article.status === "published";
 
   /**
-   * Publication (ou tentative si déjà publié)
+   * Publication de l’article
    * → Le backend empêche de republier
    */
   const handlePublish = async () => {

@@ -7,9 +7,9 @@ import api from "./api";
  * Centralise tous les appels API liés aux articles.
  *
  * RÈGLES :
- * - Le service retourne TOUJOURS des données métier (jamais res.data)
+ * - Le service retourne TOUJOURS des données métier
  * - Le status (draft / published) est géré UNIQUEMENT
- *   par la route dédiée /articles/:id/publish
+ *   par la route /articles/:id/publish
  */
 
 const articleService = {
