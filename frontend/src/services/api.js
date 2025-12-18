@@ -3,27 +3,38 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
+  withCredentials: false, // ✅ JWT en header, pas cookies
 });
 
-// Intercepteur pour ajouter token
+/**
+ * INTERCEPTOR REQUEST
+ * -------------------
+ * Ajoute automatiquement le token JWT dans le header Authorization
+ */
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
-// Intercepteur de gestion d’erreurs
+/**
+ * INTERCEPTOR RESPONSE
+ * --------------------
+ * Gestion globale des erreurs API
+ * → AUCUNE navigation ici
+ */
 api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
       localStorage.removeItem("token");
-      window.location.href = "/login";
     }
-    return Promise.reject(err);
+
+    return Promise.reject(error);
   }
 );
 

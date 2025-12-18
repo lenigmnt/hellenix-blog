@@ -1,30 +1,9 @@
-/**
- * AuthProvider.jsx
- * -----------------
- * Ce composant React encapsule toute la logique d’authentification de l’application.
- * Il expose :
- *   - user : l'utilisateur connecté
- *   - loading : indique si l'app vérifie une session existante
- *   - authError : message d'erreur global lié à l’authentification
- *   - login() / register() / logout() : fonctions pour manipuler la session
- *
- * Il utilise un Context (AuthContext) pour rendre ces valeurs disponibles
- * partout dans l'app via le hook personnalisé useAuth().
- *
- * Objectif : centraliser toute la gestion de l’auth dans un seul endroit,
- * au lieu de dupliquer la logique dans les composants Login / Register / Profile etc.
- */
-
+// src/context/AuthProvider.jsx
 import { useState, useEffect } from "react";
 import { AuthContext } from "./AuthContext";
 import authService from "../services/authService";
 
 export default function AuthProvider({ children }) {
-  /**
-   * user       → utilisateur connecté (null = non connecté)
-   * loading    → true pendant la vérification auto du token
-   * authError  → message d'erreur global lié à l’auth
-   */
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
@@ -32,9 +11,13 @@ export default function AuthProvider({ children }) {
   /**
    * AUTO-LOGIN
    * ----------
-   * Au montage de l'app :
-   * - si un token existe → appel GET /auth/me
-   * - sinon → on sort immédiatement du loading
+   * Si un token existe :
+   * → appel GET /auth/me
+   * → hydrate le user
+   *
+   * ⚠️ IMPORTANT :
+   * - NE PAS supprimer le token ici
+   * - Sinon on casse toute la session
    */
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -46,15 +29,15 @@ export default function AuthProvider({ children }) {
 
     const init = async () => {
       try {
-        const res = await authService.getMe();
-        setUser(res.data.user);
+        const { user } = await authService.getMe();
+        setUser(user);
         setAuthError(null);
       } catch (err) {
-        console.error("Error on auto-login:", err);
+        console.error("Auto-login failed:", err);
 
-        localStorage.removeItem("token");
+        // ❌ NE PAS FAIRE localStorage.removeItem("token")
+        // Le token est peut-être encore valide
         setUser(null);
-        setAuthError("Session expirée. Veuillez vous reconnecter.");
       } finally {
         setLoading(false);
       }
@@ -65,59 +48,50 @@ export default function AuthProvider({ children }) {
 
   /**
    * LOGIN
-   * -----
-   * POST /auth/login
    */
   const login = async (email, password) => {
     try {
-      const res = await authService.login({ email, password });
+      const { user, token } = await authService.login({ email, password });
 
-      localStorage.setItem("token", res.data.token);
-      setUser(res.data.user);
+      localStorage.setItem("token", token);
+      setUser(user);
       setAuthError(null);
     } catch (err) {
-      console.error("Login failed:", err);
-
       setAuthError(
         err?.response?.data?.message ||
           "Échec de la connexion. Vérifiez vos identifiants."
       );
-
       throw err;
     }
   };
 
   /**
    * REGISTER
-   * --------
-   * POST /auth/register
-   * ⚠️ Le backend attend : username / email / password
    */
   const register = async (username, email, password) => {
     try {
-      const res = await authService.register({
+      const { user, token } = await authService.register({
         username,
         email,
         password,
       });
 
-      localStorage.setItem("token", res.data.token);
-      setUser(res.data.user);
+      localStorage.setItem("token", token);
+      setUser(user);
       setAuthError(null);
     } catch (err) {
-      console.error("Register failed:", err);
-
       setAuthError(
-        err?.response?.data?.message || "Impossible de créer le compte."
+        err?.response?.data?.message ||
+          "Impossible de créer le compte."
       );
-
       throw err;
     }
   };
 
   /**
    * LOGOUT
-   * ------
+   * -------
+   * SEUL ENDROIT où on supprime le token
    */
   const logout = () => {
     localStorage.removeItem("token");
@@ -125,9 +99,6 @@ export default function AuthProvider({ children }) {
     setAuthError(null);
   };
 
-  /**
-   * Exposition du contexte
-   */
   return (
     <AuthContext.Provider
       value={{
