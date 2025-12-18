@@ -1,4 +1,4 @@
-import { Navigate,useLocation } from "react-router";
+import { Navigate, useLocation } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 
 /**
@@ -35,7 +35,7 @@ export default function RequireAuth({ children }) {
             <Navigate
             to="/login"
             replace
-            state= {{from:location}}
+            state= {{ from: location }}
             />
         );
     }

@@ -1,3 +1,4 @@
+// src/pages/Register.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
@@ -17,7 +18,7 @@ export default function Register() {
       await register(username, email, password);
       navigate("/", { replace: true });
     } catch {
-      // l’erreur est gérée et affichée via AuthProvider
+      // erreur déjà gérée dans AuthProvider
     }
   };
 
@@ -29,7 +30,8 @@ export default function Register() {
 
       <form onSubmit={handleSubmit}>
         <div>
-          <label>Username</label><br />
+          <label>Username</label>
+          <br />
           <input
             type="text"
             value={username}
@@ -39,7 +41,8 @@ export default function Register() {
         </div>
 
         <div>
-          <label>Email</label><br />
+          <label>Email</label>
+          <br />
           <input
             type="email"
             value={email}
@@ -49,7 +52,8 @@ export default function Register() {
         </div>
 
         <div>
-          <label>Password</label><br />
+          <label>Password</label>
+          <br />
           <input
             type="password"
             value={password}
