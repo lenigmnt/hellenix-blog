@@ -141,4 +141,18 @@ articleSchema.virtual("readingTime").get(function () {
   return Math.ceil(words / 200);
 });
 
+/* ---------------------------------------------------------
+   VIRTUAL : count les reviews (commentaires)
+--------------------------------------------------------- */
+articleSchema.virtual("reviews", {
+  ref: "Review",
+  localField: "_id",
+  foreignField: "article",
+});
+
+articleSchema.virtual("reviewCount").get(function () {
+  return this.reviews ? this.reviews.length : 0;
+});
+
+
 module.exports = mongoose.model("Article", articleSchema);

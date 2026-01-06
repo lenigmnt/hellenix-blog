@@ -63,6 +63,7 @@ class ArticleService {
       .populate("category", "name")
       .populate("tags", "name")
       .sort({ createdAt: -1 })
+      .populate("reviews") // compte les reviews
       .skip(skip)
       .limit(limit);
   }
