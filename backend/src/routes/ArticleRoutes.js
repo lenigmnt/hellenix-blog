@@ -1,23 +1,6 @@
 /**
  * =========================================================
  *  ROUTES : ArticleRoutes
- * ---------------------------------------------------------
- *  - Routes publiques :
- *        • Liste des articles publiés
- *        • Lecture d’un article
- *
- *  - Routes protégées :
- *        • /me → articles personnels
- *        • Création, modification, suppression, publication
- *
- *  📌 Architecture MVC :
- *        Route → Controller → Service → Model
- *
- *  ⚠️ IMPORTANT :
- *      "/me" doit être placé AVANT "/:id"
- *      sinon Express interprète "me" comme un ObjectId
- *      et Mongoose renvoie : Cast to ObjectId failed
- *
  * =========================================================
  */
 
@@ -29,48 +12,42 @@ const { protect } = require("../middleware/auth");
 
 /* =========================================================
    🔓 PUBLIC ROUTES
-   ---------------------------------------------------------
-   - Aucune authentification requise
 ========================================================= */
 
-// ➤ Liste des articles publiés (avec filtres : category, tag, search)
+// ➤ Liste des articles publiés
 router.get("/", ArticleController.getAllArticles);
 
-/* 
- * ⚠️ Route "/me" DOIT être placée AVANT "/:id"
- *    sinon "/me" est interprété comme un paramètre ":id"
- *    et génère une erreur cast ObjectId.
- *
- * Comme "/me" est PROTÉGÉ, on applique protect ici,
- * mais SANS déplacer la route.
- */
-
-// ➤ Articles de l’utilisateur connecté (protected)
+// ➤ Articles de l’utilisateur connecté
 router.get("/me", protect, ArticleController.getMyArticles);
 
-// ➤ Lecture d’un article par ID (PUBLIC)
-router.get("/:id", ArticleController.getArticle);
-
 /* =========================================================
-   🔐 PROTECTED ROUTES
-   ---------------------------------------------------------
-   - L’utilisateur doit être authentifié pour :
- *      • Créer un article
- *      • Modifier son propre article
- *      • Supprimer son article (ou admin)
- *      • Publier un article
+   🔐 PROTECTED ROUTES (EDIT / CRUD)
 ========================================================= */
 
-// ➤ Créer un article (author = req.user.id)
+// ➤ Récupérer un article pour édition (draft + published)
+router.get(
+  "/:id/edit",
+  protect,
+  ArticleController.getArticleForEdit
+);
+
+// ➤ Créer un article
 router.post("/", protect, ArticleController.createArticle);
 
-// ➤ Modifier un article (auteur uniquement)
+// ➤ Modifier un article
 router.patch("/:id", protect, ArticleController.updateArticle);
 
-// ➤ Supprimer un article (auteur ou admin)
+// ➤ Supprimer un article
 router.delete("/:id", protect, ArticleController.deleteArticle);
 
-// ➤ Publier un article (auteur uniquement)
+// ➤ Publier un article
 router.patch("/:id/publish", protect, ArticleController.publishArticle);
+
+/* =========================================================
+   🔓 PUBLIC READ (TOUJOURS EN DERNIER)
+========================================================= */
+
+// ➤ Lecture publique d’un article
+router.get("/:id", ArticleController.getArticle);
 
 module.exports = router;

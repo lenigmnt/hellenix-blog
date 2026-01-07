@@ -4,7 +4,6 @@
 
 const express = require("express"); 
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 const xssClean = require("xss-clean");
 const cors = require("cors");
@@ -28,13 +27,6 @@ module.exports = function securityMiddleware(app) {
         credentials: true,
     };
     app.use(cors(corsOptions));
-
-    // Limite de 100 requêtes / 15 min
-    app.use(rateLimit({
-        windowMs: 15 * 60 * 1000,
-        max: 100,
-        message: "Trop de requêtes. Réessayez plus tard."
-    }));
 
     // Protection injections MongoDB
     app.use(mongoSanitize());

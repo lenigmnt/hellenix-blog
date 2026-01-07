@@ -4,7 +4,7 @@
  * =========================================================
  */
 
-console.log(">>> Article model loaded");
+//console.log(">>> Article model loaded");
 
 const mongoose = require("mongoose");
 const slugify = require("slugify");
@@ -151,7 +151,7 @@ articleSchema.virtual("reviews", {
 });
 
 articleSchema.virtual("reviewCount").get(function () {
-  return this.reviews ? this.reviews.length : 0;
+  return Array.isArray(this.reviews) ? this.reviews.length : 0;
 });
 
 
