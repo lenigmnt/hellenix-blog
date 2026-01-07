@@ -1,23 +1,59 @@
 // src/components/articles/ArticleCard.jsx
+import { Link } from "react-router-dom";
 
 export default function ArticleCard({ article }) {
   if (!article) return null;
 
-  return (
-    <article>
-      <h2>{article.title || "Sans titre"}</h2>
+  const categoryName =
+    typeof article.category === "object"
+      ? article.category?.name
+      : null;
 
-      {article.author?.username && (
-        <p>
-          Par <strong>{article.author.username}</strong>
+  const PREVIEW_LENGTH = 180;
+  const contentPreview = article.content
+    ? article.content.slice(0, PREVIEW_LENGTH)
+    : "";
+
+  return (
+    <article className="article-card clamp-2">
+      {/* ================= HEADER ================= */}
+      <header className="article-card__header">
+        <h2 className="article-card__title">
+          <Link to={`/articles/${article._id}`}>
+            {article.title}
+          </Link>
+        </h2>
+
+        {categoryName && (
+          <div className="article-card__category">
+            {categoryName}
+          </div>
+        )}
+      </header>
+
+      {/* ================= CONTENT ================= */}
+      {contentPreview && (
+        <p className="article-card__content">
+          {contentPreview}
+          {article.content?.length > PREVIEW_LENGTH && "…"}
         </p>
       )}
 
-      {article.createdAt && (
-        <time dateTime={article.createdAt}>
-          {new Date(article.createdAt).toLocaleDateString()}
-        </time>
-      )}
+      {/* ================= FOOTER ================= */}
+      <footer className="article-card__footer">
+        <span>
+          {article.createdAt &&
+            new Date(article.createdAt).toLocaleDateString()}
+        </span>
+
+        {article.author?.username && (
+          <span>Par {article.author.username}</span>
+        )}
+
+        <span className="article-card__reviews">
+          {article.reviewCount ?? 0} avis
+        </span>
+      </footer>
     </article>
   );
 }

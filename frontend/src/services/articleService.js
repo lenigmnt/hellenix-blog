@@ -2,76 +2,95 @@
 import api from "./api";
 
 /**
+ * =========================================================
  * Service Article
- * ----------------
- * Centralise tous les appels API liés aux articles.
+ * =========================================================
  *
  * RÈGLES :
- * - Le service retourne TOUJOURS des données métier
- * - Le status (draft / published) est géré UNIQUEMENT
- *   par la route /articles/:id/publish
+ * - Lecture publique ≠ édition
+ * - Les drafts ne sont JAMAIS accessibles via getById
+ * - L’édition utilise /articles/:id/edit
  */
 
 const articleService = {
-  /**
-   * 🔓 Articles publics (status = published)
-   * GET /api/articles
-   */
-  getAll: async () => {
-    const res = await api.get("/articles");
-    return res.data.data.articles;
+  /* =====================================================
+     🔓 ARTICLES PUBLICS (PUBLISHED)
+  ===================================================== */
+  getAll: async (params = {}) => {
+    const res = await api.get("/articles", { params });
+
+    return {
+      articles: Array.isArray(res.data?.data?.articles)
+        ? res.data.data.articles
+        : [],
+      page: res.data?.page ?? 1,
+      limit: res.data?.limit ?? 10,
+      total: res.data?.total ?? 0,
+      totalPages: res.data?.totalPages ?? 1,
+    };
   },
 
-  /**
-   * 🔓 Lecture d’un article
-   * GET /api/articles/:id
-   */
+  /* =====================================================
+     🔓 LECTURE PUBLIQUE
+     ⚠️ NE PAS utiliser pour éditer
+  ===================================================== */
   getById: async (id) => {
     const res = await api.get(`/articles/${id}`);
     return res.data.data.article;
   },
 
-  /**
-   * 🔐 Articles de l'utilisateur connecté (draft + published)
-   * GET /api/articles/me
-   */
-  getMine: async () => {
-    const res = await api.get("/articles/me");
-    return res.data.data.articles;
+  /* =====================================================
+     🔐 ARTICLE POUR ÉDITION (PRIVATE)
+     ✔ drafts + published
+     ✔ auteur uniquement
+  ===================================================== */
+  getForEdit: async (id) => {
+    const res = await api.get(`/articles/${id}/edit`);
+    return res.data.data.article;
   },
 
-  /**
-   * 🔐 Création d’un article (toujours en draft)
-   * POST /api/articles
-   */
+  /* =====================================================
+     🔐 ARTICLES DE L’UTILISATEUR
+  ===================================================== */
+  getMine: async (params = {}) => {
+    const res = await api.get("/articles/me", { params });
+
+    return {
+      articles: res.data.data.articles,
+      page: res.data.page,
+      limit: res.data.limit,
+      total: res.data.total,
+      totalPages: res.data.totalPages,
+    };
+  },
+
+  /* =====================================================
+     🔐 CREATE (DRAFT)
+  ===================================================== */
   create: async (data) => {
     const res = await api.post("/articles", data);
     return res.data.data.article;
   },
 
-  /**
-   * 🔐 Modification d’un article
-   * ⚠️ NE JAMAIS passer "status" ici
-   * PATCH /api/articles/:id
-   */
+  /* =====================================================
+     🔐 UPDATE (SANS STATUS)
+  ===================================================== */
   update: async (id, data) => {
     const res = await api.patch(`/articles/${id}`, data);
     return res.data.data.article;
   },
 
-  /**
-   * 🔐 Publication d’un article
-   * PATCH /api/articles/:id/publish
-   */
+  /* =====================================================
+     🔐 PUBLISH
+  ===================================================== */
   publish: async (id) => {
     const res = await api.patch(`/articles/${id}/publish`);
     return res.data.data.article;
   },
 
-  /**
-   * 🔐 Suppression d’un article
-   * DELETE /api/articles/:id
-   */
+  /* =====================================================
+     🔐 DELETE
+  ===================================================== */
   remove: async (id) => {
     await api.delete(`/articles/${id}`);
   },
