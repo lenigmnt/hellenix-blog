@@ -145,7 +145,7 @@ http://localhost:3001/api
 
 ---
 
-## 🔌 État actuel de l’API
+## 🔌 État actuel de l'API
 
 ### ✔️ Fonctionnalités opérationnelles
 
@@ -158,20 +158,6 @@ http://localhost:3001/api
 - Lecture publique des catégories
 - Création d’articles avec catégorie obligatoire
 - Les tags ne sont pas requis pour créer un article
-
-### ⚠️ Points en cours / à sécuriser
-
-- Implémentation front du profil admin + gestion + stats 
-- tags, likes, rating, 
-- compléter le profil, y ajouter des stats intéressantes pour le user
-- Avancer avec le CSS
-- Finalisation des vues frontend restantes
-
-### 💡 Axes d'amélioration
-- API de suggestion de lectures complémentaires en lien avec un article
-- intégration d'une fonctionnalité IA qui permet d'établir une bibliographie universitaire en lien avec un article ou un tag ou une catégorie
-- Ultime : rendre le blog communautaire avec une messagerie intégrée, badges de productivité / notation / participation dans les commentaires...
----
 
 ## 🎨 Lancement du frontend
 
@@ -409,6 +395,21 @@ Variables utilisées :
     - .gitignore en place ✅
 - [x]  Pas de fichiers `.env` dans Git
     - .gitignore en place ✅
+
+
+### ⚠️ Points en cours / à sécuriser
+
+- Implémentation front du profil admin + gestion + stats 
+- Implémentation Tags, likes, rating, 
+- Compléter le profil, y ajouter des stats intéressantes pour le user
+- Avancer avec le CSS
+- Finalisation des vues frontend restantes
+
+### 💡 Axes d'amélioration
+- API de suggestion de lectures complémentaires en lien avec un article
+- Intégration d'une fonctionnalité IA qui permet d'établir une bibliographie universitaire en lien avec un article ou un tag ou une catégorie
+- Ultime : rendre le blog communautaire avec une messagerie intégrée, badges de productivité / notation / participation dans les commentaires...
+---
 
 ## 🏁 Conclusion
 
