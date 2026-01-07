@@ -107,7 +107,7 @@ export default function ArticleForm({
       </div>
 
       <button type="submit" disabled={loading}>
-        {loading ? "Enregistrement..." : "Enregistrer en brouillon"}
+        {loading ? "Enregistrement..." : "Sauvegarder"}
       </button>
     </form>
   );

@@ -7,9 +7,14 @@ import ArticleForm from "../components/articles/ArticleForm";
 /**
  * Page EditArticle
  * ----------------
- * - Charge l’article existant
+ * - Charge l’article existant (PRIVATE)
  * - Pré-remplit le formulaire
  * - Sauvegarde les modifications
+ *
+ * ⚠️ IMPORTANT :
+ * Utilise OBLIGATOIREMENT la route :
+ *   GET /api/articles/:id/edit
+ * pour accéder aux drafts
  */
 export default function EditArticle() {
   const { id } = useParams();
@@ -19,16 +24,16 @@ export default function EditArticle() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  /**
-   * Charger l’article à modifier
-   */
+  /* =====================================================
+     LOAD ARTICLE FOR EDIT (PRIVATE)
+  ===================================================== */
   useEffect(() => {
     const fetchArticle = async () => {
       try {
-        const data = await articleService.getById(id);
+        const data = await articleService.getForEdit(id); // ✅ ROUTE PRIVÉE
         setArticle(data);
       } catch (err) {
-        console.error("Erreur chargement article :", err);
+        console.error("❌ Erreur chargement article (edit) :", err);
         setError("Impossible de charger l’article");
       } finally {
         setLoading(false);
@@ -38,15 +43,15 @@ export default function EditArticle() {
     fetchArticle();
   }, [id]);
 
-  /**
-   * Sauvegarde des modifications
-   */
+  /* =====================================================
+     UPDATE
+  ===================================================== */
   const handleUpdate = async (formData) => {
     try {
       await articleService.update(id, formData);
       navigate("/my-articles", { replace: true });
     } catch (err) {
-      console.error("Erreur mise à jour :", err);
+      console.error("❌ Erreur mise à jour :", err);
       setError("Impossible de mettre à jour l’article");
     }
   };
@@ -62,7 +67,7 @@ export default function EditArticle() {
       <ArticleForm
         initialValues={article}
         onSubmit={handleUpdate}
-        submitLabel="Enregistrer les modifications"
+        submitLabel="Sauvegarder"
       />
     </div>
   );
