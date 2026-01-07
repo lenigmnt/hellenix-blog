@@ -103,7 +103,7 @@ Créer un fichier `.env` à la racine de `backend/`.
 Exemple minimal :
 
 ```
-PORT=3000
+PORT=3001
 MONGODB_URI=mongodb://localhost:27018/hellenix
 JWT_SECRET=secret_jwt
 JWT_EXPIRES_IN=90d
