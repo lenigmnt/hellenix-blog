@@ -1,5 +1,5 @@
 // src/context/AuthProvider.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AuthContext } from "./AuthContext";
 import authService from "../services/authService";
 
@@ -7,9 +7,11 @@ export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
+// attention à bien gérer sinon erreur too many request de connexion
+  const hasTriedAutoLogin = useRef(false);
 
   /**
-   * AUTO-LOGIN
+   * AUTO-LOGIN   
    * ----------
    * Si un token existe :
    * → appel GET /auth/me
@@ -20,6 +22,11 @@ export default function AuthProvider({ children }) {
    * - Sinon on casse toute la session
    */
   useEffect(() => {
+
+    // empêche toute répétition (StrictMode inclus)
+    if (hasTriedAutoLogin.current) return;
+    hasTriedAutoLogin.current = true;
+
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -34,9 +41,6 @@ export default function AuthProvider({ children }) {
         setAuthError(null);
       } catch (err) {
         console.error("Auto-login failed:", err);
-
-        // ❌ NE PAS FAIRE localStorage.removeItem("token")
-        // Le token est peut-être encore valide
         setUser(null);
       } finally {
         setLoading(false);
@@ -52,7 +56,6 @@ export default function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       const { user, token } = await authService.login({ email, password });
-
       localStorage.setItem("token", token);
       setUser(user);
       setAuthError(null);
@@ -89,7 +92,7 @@ export default function AuthProvider({ children }) {
   };
 
   /**
-   * LOGOUT
+   * LOGOUT   
    * -------
    * SEUL ENDROIT où on supprime le token
    */
