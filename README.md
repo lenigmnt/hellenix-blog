@@ -1,4 +1,5 @@
 # 🏛️ Hellenix — Blog MERN (thème universitaire)
+M1 Lead Dev - ECV Digital | Projet scolaire
 
 **Hellenix** (du grec _hellene_ qui signifie "grec", en tant que peuple de la Grèce Antique) est un blog full-stack MERN destiné à l’usage d’étudiants en Humanités Numériques, domaine universitaire émergent depuis la moitié des années 2010s en France. Pour exemple, le programme du [Master Sciences des Données Histoire et Culture à Paris 1.](https://formations.pantheonsorbonne.fr/fr/catalogue-des-formations/master-M/master-histoire-de-l-art-KBUVEDV2/master-parcours-sciences-des-donnees-histoire-et-culture-fi-M5UAE5VQ.html)
 
